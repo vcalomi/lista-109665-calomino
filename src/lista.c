@@ -10,7 +10,6 @@ typedef struct nodo {
 
 struct lista {
 	nodo_t *nodo_inicio;
-	nodo_t *nodo_penultimo;
 	nodo_t *nodo_final;
 	size_t cantidad_elementos;
 };
@@ -20,18 +19,6 @@ struct lista_iterador {
 	lista_t *lista;
 	size_t iteraciones;
 };
-
-void referenciar_penultimo_nodo(lista_t *lista)
-{
-	nodo_t *actual = lista->nodo_inicio;
-	while (actual) {
-		if (actual->siguiente == lista->nodo_final) {
-			lista->nodo_penultimo = actual;
-			break;
-		}
-		actual = actual->siguiente;
-	}
-}
 
 lista_t *lista_crear()
 {
@@ -55,7 +42,6 @@ lista_t *lista_insertar(lista_t *lista, void *elemento)
 		lista->nodo_final = nuevo_nodo;
 		lista->nodo_inicio->siguiente = NULL;
 	} else {
-		lista->nodo_penultimo = lista->nodo_final;
 		lista->nodo_final->siguiente = nuevo_nodo;
 		lista->nodo_final = lista->nodo_final->siguiente;
 	}
@@ -118,14 +104,20 @@ void *lista_quitar(lista_t *lista)
 		free(aux);
 		return elemento;
 	}
-	nodo_t *aux = lista->nodo_final;
-	lista->nodo_penultimo->siguiente = NULL;
-	lista->nodo_final = lista->nodo_penultimo;
-	lista->cantidad_elementos--;
-	referenciar_penultimo_nodo(lista);
-	void *elemento = aux->elemento;
-	free(aux);
-	return elemento;
+	nodo_t *actual = lista->nodo_inicio;
+	while (actual) {
+		if (actual->siguiente == lista->nodo_final) {
+			lista->cantidad_elementos--;
+			nodo_t *aux = lista->nodo_final;
+			actual->siguiente = NULL;
+			lista->nodo_final = actual;
+			void *elemento = aux->elemento;
+			free(aux);
+			return elemento;
+		}
+		actual = actual->siguiente;
+	}
+	return NULL;
 }
 
 void *lista_quitar_de_posicion(lista_t *lista, size_t posicion)
@@ -166,7 +158,7 @@ void *lista_quitar_de_posicion(lista_t *lista, size_t posicion)
 
 void *lista_elemento_en_posicion(lista_t *lista, size_t posicion)
 {
-	if (!lista || posicion > lista->cantidad_elementos) {
+	if (!lista || posicion >= lista->cantidad_elementos) {
 		return NULL;
 	}
 
