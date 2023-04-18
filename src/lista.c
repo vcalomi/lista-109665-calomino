@@ -18,6 +18,7 @@ struct lista {
 struct lista_iterador {
 	nodo_t *actual;
 	lista_t *lista;
+	size_t iteraciones;
 };
 
 void referenciar_penultimo_nodo(lista_t *lista)
@@ -243,6 +244,8 @@ void lista_destruir(lista_t *lista)
 
 void lista_destruir_todo(lista_t *lista, void (*funcion)(void *))
 {
+	if (!lista)
+		return;
 	if (funcion != NULL) {
 		nodo_t *actual = lista->nodo_inicio;
 		while (actual) {
@@ -256,30 +259,72 @@ void lista_destruir_todo(lista_t *lista, void (*funcion)(void *))
 
 lista_iterador_t *lista_iterador_crear(lista_t *lista)
 {
-	return NULL;
+	if (!lista)
+		return NULL;
+	lista_iterador_t *iterador = calloc(1, sizeof(lista_iterador_t));
+	if (!iterador) {
+		free(iterador);
+		return NULL;
+	}
+	iterador->lista = lista;
+	iterador->actual = lista->nodo_inicio;
+	return iterador;
 }
 
 bool lista_iterador_tiene_siguiente(lista_iterador_t *iterador)
 {
+	if (!iterador || !iterador->lista->cantidad_elementos) {
+		return false;
+	}
+	if (iterador->iteraciones < iterador->lista->cantidad_elementos) {
+		return true;
+	}
+
 	return false;
 }
 
 bool lista_iterador_avanzar(lista_iterador_t *iterador)
 {
+	if (lista_iterador_tiene_siguiente(iterador)) {
+		iterador->actual = iterador->actual->siguiente;
+
+		iterador->iteraciones++;
+		return true;
+	}
 	return false;
 }
 
 void *lista_iterador_elemento_actual(lista_iterador_t *iterador)
 {
-	return NULL;
+	if (!iterador || !iterador->lista ||
+	    !iterador->lista->cantidad_elementos)
+		return NULL;
+	if (iterador->iteraciones == iterador->lista->cantidad_elementos)
+		return NULL;
+	return iterador->actual->elemento;
 }
 
 void lista_iterador_destruir(lista_iterador_t *iterador)
 {
+	free(iterador);
 }
 
 size_t lista_con_cada_elemento(lista_t *lista, bool (*funcion)(void *, void *),
 			       void *contexto)
 {
-	return 0;
+	if (!lista || !funcion)
+		return 0;
+
+	nodo_t *actual = lista->nodo_inicio;
+	size_t elementos_recorridos = 0;
+	while (actual) {
+		if (funcion(actual->elemento, contexto)) {
+			elementos_recorridos++;
+		} else if (!funcion(actual->elemento, contexto)) {
+			elementos_recorridos++;
+			return elementos_recorridos;
+		}
+		actual = actual->siguiente;
+	}
+	return elementos_recorridos;
 }
