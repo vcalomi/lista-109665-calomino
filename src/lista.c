@@ -268,21 +268,31 @@ bool lista_iterador_tiene_siguiente(lista_iterador_t *iterador)
 	if (!iterador || !iterador->lista->cantidad_elementos) {
 		return false;
 	}
-	if (iterador->iteraciones < iterador->lista->cantidad_elementos) {
-		return true;
-	}
 
+	if (iterador->actual)
+		return true;
 	return false;
 }
 
 bool lista_iterador_avanzar(lista_iterador_t *iterador)
 {
-	if (lista_iterador_tiene_siguiente(iterador)) {
-		iterador->actual = iterador->actual->siguiente;
+	if (!iterador || !iterador->lista ||
+	    !iterador->lista->cantidad_elementos)
+		return false;
 
+	if (lista_iterador_tiene_siguiente(iterador) &&
+	    iterador->iteraciones < iterador->lista->cantidad_elementos) {
+		iterador->actual = iterador->actual->siguiente;
+		if (iterador->iteraciones ==
+		    iterador->lista->cantidad_elementos - 1) {
+			iterador->actual = NULL;
+			return false;
+		}
 		iterador->iteraciones++;
 		return true;
 	}
+
+	iterador->actual = NULL;
 	return false;
 }
 
@@ -291,9 +301,10 @@ void *lista_iterador_elemento_actual(lista_iterador_t *iterador)
 	if (!iterador || !iterador->lista ||
 	    !iterador->lista->cantidad_elementos)
 		return NULL;
-	if (iterador->iteraciones == iterador->lista->cantidad_elementos)
-		return NULL;
-	return iterador->actual->elemento;
+
+	if (iterador->actual)
+		return iterador->actual->elemento;
+	return NULL;
 }
 
 void lista_iterador_destruir(lista_iterador_t *iterador)
